@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaScanner | Descubre quién no te sigue</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* ===== ANIMACIÓN DE INTRO ESTILO NETFLIX ===== */
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.8); }
+            20% { opacity: 0.3; }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes textGlow {
+            0%, 100% { text-shadow: 0 0 20px rgba(168, 85, 247, 0.5), 0 0 40px rgba(236, 72, 153, 0.3); }
+            50% { text-shadow: 0 0 40px rgba(168, 85, 247, 0.8), 0 0 80px rgba(236, 72, 153, 0.6); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; visibility: hidden; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        
+        .intro-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a0f 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeOut 1s ease-in-out 4s forwards;
+        }
+        
+        .intro-content {
+            text-align: center;
+            animation: fadeInScale 2s ease-out;
+        }
+        
+        .intro-title {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, #c084fc 0%, #ec4899 25%, #f472b6 50%, #c084fc 75%, #ec4899 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: textGlow 2s ease-in-out infinite, shimmer 3s linear infinite;
+            letter-spacing: -2px;
+        }
+        
+        .intro-subtitle {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: #e0e0e0;
+            margin-top: 1rem;
+            opacity: 0;
+            animation: slideUp 1s ease-out 1s forwards;
+            letter-spacing: 2px;
+        }
+        
+        .intro-creator {
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            color: #888;
+            margin-top: 2rem;
+            opacity: 0;
+            animation: slideUp 1s ease-out 2s forwards;
+            font-style: italic;
+        }
+        
+        .intro-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 2rem;
+            background: linear-gradient(45deg, #c084fc, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(236, 72, 153, 0.6);
+        }
+        
+        /* ===== REGLAS PARA IMPRESIÓN PDF ===== */
+        @media print {
+            body * { visibility: hidden; }
+            #seccionResultados, #seccionResultados * { visibility: visible; }
+            #seccionResultados { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; background: white; color: black; }
+            .no-print { display: none !important; }
+            .intro-animation { display: none !important; }
+            td, th, p, h2 { color: black !important; }
+            a { color: #2563eb !important; text-decoration: none; }
+        }
+        
+        /* ===== ESTILOS ADICIONALES ===== */
+        .watermark {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 50;
+            opacity: 0.3;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .watermark:hover {
+            opacity: 0.6;
+        }
+        
+        .instagram-icon {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 50;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .instagram-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(220, 39, 67, 0.5);
+        }
+        
+        .fade-in-up {
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        .bg-gray-750 {
+            background-color: #1f2937;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
+
+    <!-- ===== INTRO ANIMATION ===== -->
+    <div class="intro-animation" id="introAnimation">
+        <div class="intro-content">
+            <div class="intro-logo">
+                📸
+            </div>
+            <h1 class="intro-title">InstaScanner</h1>
+            <p class="intro-subtitle">Descubre quién no te sigue</p>
+            <p class="intro-creator">✨ Creado por Jonathan Loza ✨</p>
+        </div>
+    </div>
+
+    <!-- ===== MARCA DE AGUA ===== -->
+    <div class="watermark no-print">
+        <p class="text-xs text-gray-500">InstaScanner © Jonathan Loza</p>
+    </div>
+
+    <!-- ===== ICONO DE INSTAGRAM ===== -->
+    <a href="https://www.instagram.com/jonathan_loza05?igsh=MXViOTBhdm9saTVncA==" 
+       target="_blank" 
+       class="instagram-icon no-print" 
+       title="Sígueme en Instagram">
+        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+        </svg>
+    </a>
+
+    <main class="max-w-4xl mx-auto p-4 md:p-6 mt-6 md:mt-10">
+        <!-- Encabezado -->
+        <div class="text-center mb-8 md:mb-10 no-print fade-in-up">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-4">
+                InstaScanner
+            </h1>
+            <p class="text-gray-400 text-base md:text-lg">Descubre quién no te devuelve el follow. 100% Privado y Seguro.</p>
+        </div>
+
+        <!-- Tutorial de Pasos -->
+        <div class="mb-12 no-print fade-in-up" style="animation-delay: 0.2s;">
+            <h2 class="text-2xl font-bold mb-6 text-center text-white">¿Cómo descargo mis datos correctamente?</h2>
+            
+            <!-- Usamos un grid de 4 columnas para pantallas grandes -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Paso 1 -->
+                <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 shadow-lg relative transform transition hover:-translate-y-1 hover:shadow-2xl flex flex-col">
+                    <div class="absolute -top-4 -left-4 bg-pink-500 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">1</div>
+                    <h3 class="text-lg font-bold mb-2 text-pink-400 mt-2">Crear Exportación</h3>
+                    <p class="text-sm text-gray-400 mb-4 flex-grow">Ve a <strong>Ajustes > Centro de cuentas > Tu información</strong>. Toca "Descargar tu información" y selecciona <strong>"Crear exportación"</strong>.</p>
+                    <div class="bg-gray-900 rounded-lg h-32 overflow-hidden border border-gray-600 flex items-center justify-center p-2 mt-auto">
+                        <img src="{{ url_for('static', filename='img/paso1.png') }}" alt="Paso 1" class="w-full h-full object-contain opacity-90 hover:opacity-100 transition">
+                    </div>
+                </div>
+
+                <!-- Paso 2 -->
+                <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 shadow-lg relative transform transition hover:-translate-y-1 hover:shadow-2xl flex flex-col">
+                    <div class="absolute -top-4 -left-4 bg-purple-500 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">2</div>
+                    <h3 class="text-lg font-bold mb-2 text-purple-400 mt-2">Elegir Destino</h3>
+                    <p class="text-sm text-gray-400 mb-4 flex-grow">Selecciona el perfil de tu cuenta de Instagram y elige la opción <strong>"Exportar al dispositivo"</strong> para descargar el archivo en tu equipo.</p>
+                    <div class="bg-gray-900 rounded-lg h-32 overflow-hidden border border-gray-600 flex items-center justify-center p-2 mt-auto">
+                        <img src="{{ url_for('static', filename='img/paso2.png') }}" alt="Paso 2" class="w-full h-full object-contain opacity-90 hover:opacity-100 transition">
+                    </div>
+                </div>
+
+                <!-- Paso 3 -->
+                <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 shadow-lg relative transform transition hover:-translate-y-1 hover:shadow-2xl flex flex-col">
+                    <div class="absolute -top-4 -left-4 bg-blue-500 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">3</div>
+                    <h3 class="text-lg font-bold mb-2 text-blue-400 mt-2">Filtrar Datos</h3>
+                    <p class="text-sm text-gray-400 mb-4 flex-grow">Toca "Personalizar información". En la sección <em>Conexiones</em>, deja activada <strong>SOLO</strong> la casilla de <strong>"Seguidores y seguidos"</strong>.</p>
+                    <div class="bg-gray-900 rounded-lg h-32 overflow-hidden border border-gray-600 flex items-center justify-center p-2 mt-auto">
+                        <img src="{{ url_for('static', filename='img/paso3.png') }}" alt="Paso 3" class="w-full h-full object-contain opacity-90 hover:opacity-100 transition">
+                    </div>
+                </div>
+
+                <!-- Paso 4 -->
+                <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 shadow-lg relative transform transition hover:-translate-y-1 hover:shadow-2xl flex flex-col">
+                    <div class="absolute -top-4 -left-4 bg-green-500 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">4</div>
+                    <h3 class="text-lg font-bold mb-2 text-green-400 mt-2">Formato JSON</h3>
+                    <p class="text-sm text-gray-400 mb-4 flex-grow">Intervalo: <strong>"Desde el principio"</strong>. Formato: <strong>"JSON"</strong> (¡Vital!). Finalmente, haz clic en <strong>"Iniciar exportación"</strong>.</p>
+                    <div class="bg-gray-900 rounded-lg h-32 overflow-hidden border border-gray-600 flex items-center justify-center p-2 mt-auto">
+                        <img src="{{ url_for('static', filename='img/paso4.png') }}" alt="Paso 4" class="w-full h-full object-contain opacity-90 hover:opacity-100 transition">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Tarjeta de subida -->
+        <div class="bg-gray-800 rounded-2xl p-6 md:p-8 shadow-2xl border border-gray-700 mb-10 no-print fade-in-up">
+            <div class="mb-6 bg-blue-900/30 border-l-4 border-blue-500 p-4 rounded text-blue-200 text-xs md:text-sm">
+                <strong>🔒 Privacidad garantizada:</strong> Tus datos se procesan temporalmente y se destruyen automáticamente. No guardamos nada.
+            </div>
+
+            <form action="/" method="POST" enctype="multipart/form-data" class="flex flex-col items-center">
+                <label class="block mb-4 text-center w-full">
+                    <span class="text-gray-300">Sube tu archivo <span class="font-mono text-pink-400">.zip</span> de Instagram</span>
+                    <input type="file" name="archivo_zip" accept=".zip" required 
+                           class="mt-4 block w-full text-sm text-gray-400
+                                  file:mr-4 file:py-3 file:px-4 md:file:px-6
+                                  file:rounded-full file:border-0
+                                  file:text-sm file:font-bold
+                                  file:bg-purple-600 file:text-white
+                                  hover:file:bg-purple-700 cursor-pointer transition-all"/>
+                </label>
+                <button type="submit" class="mt-4 w-full md:w-auto bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 px-10 rounded-full shadow-lg transform transition hover:scale-105">
+                    Escanear Seguidores
+                </button>
+            </form>
+        </div>
+
+        <!-- Zona de Resultados -->
+        {% if resultados %}
+        <div class="bg-gray-800 rounded-2xl p-6 md:p-8 shadow-2xl border border-gray-700 animate-fade-in-up" id="seccionResultados">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center text-white">📊 Tu Reporte Oficial</h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div class="bg-gray-700 p-4 rounded-xl text-center border border-gray-600">
+                    <p class="text-xs md:text-sm text-gray-400">Tú Sigues a</p>
+                    <p class="text-2xl md:text-3xl font-bold text-blue-400">{{ resultados.total_siguiendo }}</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-xl text-center border border-gray-600">
+                    <p class="text-xs md:text-sm text-gray-400">Te Siguen</p>
+                    <p class="text-2xl md:text-3xl font-bold text-green-400">{{ resultados.total_seguidores }}</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-xl text-center border border-gray-600 border-b-4 border-b-red-500">
+                    <p class="text-xs md:text-sm text-gray-400">No te siguen</p>
+                    <p class="text-2xl md:text-3xl font-bold text-red-400">{{ resultados.traidores|length }}</p>
+                </div>
+            </div>
+
+            <!-- Controles: Buscador y Exportar -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 no-print">
+                <input type="text" id="buscador" placeholder="🔍 Buscar usuario..." 
+                       class="bg-gray-900 border border-gray-600 text-white text-sm rounded-lg focus:ring-pink-500 focus:border-pink-500 block w-full md:w-64 p-2.5">
+                
+                <div class="flex flex-col sm:flex-row w-full md:w-auto space-y-2 sm:space-y-0 sm:space-x-2">
+                    <button onclick="window.print()" class="flex items-center justify-center w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded border border-blue-500 transition">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        PDF
+                    </button>
+                    <button onclick="exportarCSV()" class="flex items-center justify-center w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded border border-green-500 transition">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="overflow-x-auto rounded-lg border border-gray-700">
+                <table class="w-full text-left border-collapse" id="tablaUsuarios">
+                    <thead>
+                        <tr class="bg-gray-900 text-gray-400 text-xs md:text-sm uppercase">
+                            <th class="p-3 md:p-4 border-b border-gray-700">Usuario</th>
+                            <th class="p-3 md:p-4 border-b border-gray-700 text-right">Te fuiste de follow el</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700" id="cuerpoTabla">
+                        {% for persona in resultados.traidores %}
+                        <tr class="hover:bg-gray-750 transition duration-150 fila-usuario">
+                            <td class="p-3 md:p-4 text-white font-medium nombre-usuario">
+                                <a href="https://instagram.com/{{ persona.usuario }}" target="_blank" class="hover:text-pink-400 transition">
+                                    @{{ persona.usuario }}
+                                </a>
+                            </td>
+                            <td class="p-3 md:p-4 text-right text-gray-400 text-xs md:text-sm">{{ persona.fecha }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Controles de Paginación -->
+            <div class="flex justify-between items-center mt-6 no-print">
+                <button id="btnAnterior" onclick="cambiarPagina(-1)" class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                    Anterior
+                </button>
+                <span id="infoPagina" class="text-gray-400 text-sm font-medium"></span>
+                <button id="btnSiguiente" onclick="cambiarPagina(1)" class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                    Siguiente
+                </button>
+            </div>
+        </div>
+
+        <script>
+            // === CONTROL DE LA ANIMACIÓN DE INTRO ===
+            document.addEventListener('DOMContentLoaded', function() {
+                // La animación se oculta automáticamente después de 4 segundos (definido en CSS)
+                // Pero también podemos agregar un fallback por si acaso
+                setTimeout(function() {
+                    const intro = document.getElementById('introAnimation');
+                    if (intro) {
+                        intro.style.display = 'none';
+                    }
+                }, 4500); // 4.5 segundos para asegurar que la transición termine
+            });
+
+            // === LÓGICA DE PAGINACIÓN Y BUSCADOR ===
+            let paginaActual = 1;
+            const filasPorPagina = 20;
+            let todasLasFilas = Array.from(document.querySelectorAll('.fila-usuario'));
+            let filasFiltradas = todasLasFilas;
+
+            function renderizarTabla() {
+                // Ocultar todas las filas
+                todasLasFilas.forEach(fila => fila.style.display = 'none');
+                
+                // Calcular qué filas mostrar
+                let inicio = (paginaActual - 1) * filasPorPagina;
+                let fin = inicio + filasPorPagina;
+                
+                filasFiltradas.slice(inicio, fin).forEach(fila => fila.style.display = '');
+
+                // Actualizar info y botones
+                let totalPaginas = Math.ceil(filasFiltradas.length / filasPorPagina) || 1;
+                document.getElementById('infoPagina').innerText = `Página ${paginaActual} de ${totalPaginas}`;
+                document.getElementById('btnAnterior').disabled = paginaActual === 1;
+                document.getElementById('btnSiguiente').disabled = paginaActual === totalPaginas;
+            }
+
+            function cambiarPagina(direccion) {
+                paginaActual += direccion;
+                renderizarTabla();
+            }
+
+            // Buscador en tiempo real
+            document.getElementById('buscador').addEventListener('keyup', function() {
+                let filtro = this.value.toLowerCase();
+                filasFiltradas = todasLasFilas.filter(fila => {
+                    let nombre = fila.querySelector('.nombre-usuario').textContent.toLowerCase();
+                    return nombre.includes(filtro);
+                });
+                paginaActual = 1; // Volver a la página 1 al buscar
+                renderizarTabla();
+            });
+
+            // Inicializar tabla al cargar
+            if(todasLasFilas.length > 0) {
+                renderizarTabla();
+            }
+
+            // === LÓGICA DE EXPORTACIÓN CSV ===
+            function exportarCSV() {
+                let csv = [];
+                // Exportamos los datos filtrados actualmente (no solo la página)
+                filasFiltradas.forEach(function(fila) {
+                    let columnas = fila.querySelectorAll('th, td');
+                    let filaCSV = [];
+                    columnas.forEach(function(columna) {
+                        let texto = columna.innerText.replace('@', '').trim();
+                        filaCSV.push('"' + texto + '"');
+                    });
+                    csv.push(filaCSV.join(','));
+                });
+
+                let csvCompleto = csv.join('\n');
+                let blob = new Blob([csvCompleto], { type: 'text/csv;charset=utf-8;' });
+                let link = document.createElement("a");
+                link.setAttribute("href", URL.createObjectURL(blob));
+                link.setAttribute("download", "InstaScanner_Reporte.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        </script>
+        {% endif %}
+    </main>
+    <!-- Script para evitar el mensaje de "Confirmar reenvío de formulario" al recargar -->
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
+</body>
+</html>
