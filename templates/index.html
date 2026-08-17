@@ -321,7 +321,7 @@
                         <h3 class="text-lg font-bold mb-2 text-blue-400 mt-2">Filtrar Datos</h3>
                         <p class="text-sm text-gray-400 mb-4 flex-grow">Toca "Personalizar información". En la sección <em>Conexiones</em>, deja activada <strong>SOLO</strong> la casilla de <strong>"Seguidores y seguidos"</strong>.</p>
                         <div class="bg-gray-900 rounded-lg h-32 overflow-hidden border border-gray-600 flex items-center justify-center p-2 mt-auto">
-                            <img src="{{ url_for('static', filename='img/paso3.png') }}" alt="Paso 3" class="w-full h-full object-contain opacity-90 hover:opacity-100 transition">
+                            <img src="{{ url_for('static', filename='img/paso4.png') }}" alt="Paso 3" class="w-full h-full object-contain opacity-90 hover:opacity-100 transition">
                         </div>
                     </div>
 
@@ -331,12 +331,22 @@
                         <h3 class="text-lg font-bold mb-2 text-green-400 mt-2">Formato JSON</h3>
                         <p class="text-sm text-gray-400 mb-4 flex-grow">Intervalo: <strong>"Desde el principio"</strong>. Formato: <strong>"JSON"</strong> (¡Vital!). Finalmente, haz clic en <strong>"Iniciar exportación"</strong>.</p>
                         <div class="bg-gray-900 rounded-lg h-32 overflow-hidden border border-gray-600 flex items-center justify-center p-2 mt-auto">
-                            <img src="{{ url_for('static', filename='img/paso4.png') }}" alt="Paso 4" class="w-full h-full object-contain opacity-90 hover:opacity-100 transition">
+                            <img src="{{ url_for('static', filename='img/paso3.png') }}" alt="Paso 4" class="w-full h-full object-contain opacity-90 hover:opacity-100 transition">
                         </div>
                     </div>
 
                 </div>
             </div>
+
+            <!-- Alerta de Error Dinámica -->
+            {% if error %}
+            <div class="mb-6 bg-red-900/40 border border-red-500 text-red-200 p-4 rounded-xl text-sm md:text-base flex items-center shadow-lg">
+                <i class="fas fa-exclamation-triangle text-red-400 text-xl mr-3 flex-shrink-0"></i>
+                <div>
+                    <strong>¡Atención!</strong> {{ error | safe }}
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Tarjeta de subida -->
             <div class="bg-gray-800 rounded-2xl p-6 md:p-8 shadow-2xl border border-gray-700 mb-10 no-print fade-in-up">
@@ -480,24 +490,29 @@
                 })
                 .then(response => response.text())
                 .then(html => {
-                    // Extraer la sección de resultados del HTML recibido
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Buscamos si Python mandó una alerta de error específica
+                    const alertaServidor = doc.querySelector('.bg-red-900\\/40');
                     const nuevosResultados = doc.getElementById('seccionResultados');
 
-                    if (nuevosResultados) {
-                        // Reemplazar el contenido del contenedor
-                        contenedorResultados.innerHTML = '';
-                        contenedorResultados.appendChild(nuevosResultados);
+                    // Limpiamos la zona de resultados antes de pintar lo nuevo
+                    contenedorResultados.innerHTML = '';
 
-                        // Re-inicializar la lógica de la tabla (paginación, búsqueda, etc.)
+                    if (alertaServidor) {
+                        // Si Python detectó que falta un archivo, es HTML o está vacío, mostramos su mensaje exacto
+                        contenedorResultados.appendChild(alertaServidor);
+                    } else if (nuevosResultados) {
+                        // Si todo salió bien, mostramos el reporte con la tabla
+                        contenedorResultados.appendChild(nuevosResultados);
                         inicializarTabla();
                     } else {
-                        // Si no hay resultados (error o nada), mostrar mensaje
+                        // Por si ocurre cualquier otro fallo imprevisto
                         contenedorResultados.innerHTML = `
-                            <div class="bg-red-900/30 border border-red-500 text-red-200 p-4 rounded-lg text-center">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                No se encontraron datos. Asegúrate de subir un archivo ZIP válido.
+                            <div class="mb-6 bg-red-900/40 border border-red-500 text-red-200 p-4 rounded-xl text-center shadow-lg">
+                                <i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>
+                                Ocurrió un error inesperado al procesar el archivo.
                             </div>
                         `;
                     }
